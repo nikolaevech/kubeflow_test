@@ -1,0 +1,241 @@
+klan@TB-anklimov:/mnt/d/Проекты/KubeFlow/kubeflow-platform$ make reset
+Полное удаление Kubeflow и Minikube...
+⚠️  WARNING: This will delete all Kubeflow components and data!
+Are you sure you want to continue? (yes/no): yes
+[INFO] Starting cleanup process...
+[INFO] Removing Custom Dashboard...
+No resources found
+[INFO] Removing JupyterLab...
+[INFO] Removing Katib...
+[INFO] Removing KServe...
+[INFO] Removing Kubeflow Pipelines...
+[INFO] Removing Infrastructure (MinIO, MySQL)...
+deployment.apps "minio" deleted from ml-infrastructure namespace
+persistentvolumeclaim "minio-pvc" deleted from ml-infrastructure namespace
+secret "minio-secret" deleted from ml-infrastructure namespace
+service "minio-service" deleted from ml-infrastructure namespace
+service "minio-console" deleted from ml-infrastructure namespace
+configmap "mysql-config" deleted from ml-infrastructure namespace
+deployment.apps "mysql" deleted from ml-infrastructure namespace
+persistentvolumeclaim "mysql-pvc" deleted from ml-infrastructure namespace
+secret "mysql-secret" deleted from ml-infrastructure namespace
+service "mysql-service" deleted from ml-infrastructure namespace
+[INFO] Removing Argo Workflows...
+namespace "argo" deleted
+[INFO] Removing namespaces...
+namespace "kubeflow" deleted
+namespace "kubeflow-user" deleted
+namespace "ml-infrastructure" deleted
+Do you want to delete the entire Minikube cluster? (yes/no): no
+[INFO] Minikube cluster preserved.
+[SUCCESS] Cleanup complete! 🧹
+🔥  Deleting "minikube" in docker ...
+🔥  Deleting container "minikube" ...
+🔥  Removing /home/klan/.minikube/machines/minikube ...
+💀  Removed all traces of the "minikube" cluster.
+Запуск Minikube...
+🚀 Starting Minikube with Kubeflow configuration...
+💀  Removed all traces of the "minikube" cluster.
+😄  minikube v1.37.0 on Ubuntu 24.04 (kvm/amd64)
+✨  Using the docker driver based on user configuration
+📌  Using Docker driver with root privileges
+❗  For an improved experience it's recommended to use Docker Engine instead of Docker Desktop.
+Docker Engine installation instructions: https://docs.docker.com/engine/install/#server
+👍  Starting "minikube" primary control-plane node in "minikube" cluster
+🚜  Pulling base image v0.0.48 ...
+🔥  Creating docker container (CPUs=6, Memory=12288MB) ...
+🐳  Preparing Kubernetes v1.28.0 on Docker 28.4.0 ...
+🔗  Configuring bridge CNI (Container Networking Interface) ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+    ▪ Using image registry.k8s.io/ingress-nginx/controller:v1.13.2
+    ▪ Using image registry.k8s.io/metrics-server/metrics-server:v0.8.0
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+🔎  Verifying ingress addon...
+🌟  Enabled addons: storage-provisioner, metrics-server, default-storageclass, ingress
+
+❗  /usr/local/bin/kubectl is version 1.34.1, which may have incompatibilities with Kubernetes 1.28.0.
+    ▪ Want kubectl v1.28.0? Try 'minikube kubectl -- get pods -A'
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+✅ Minikube started successfully
+💡  ingress is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+    ▪ Using image registry.k8s.io/ingress-nginx/controller:v1.13.2
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+    ▪ Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2
+🔎  Verifying ingress addon...
+🌟  The 'ingress' addon is enabled
+💡  metrics-server is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+    ▪ Using image registry.k8s.io/metrics-server/metrics-server:v0.8.0
+🌟  The 'metrics-server' addon is enabled
+📦 Installing Argo Workflows (required for Kubeflow Pipelines)...
+namespace/argo created
+customresourcedefinition.apiextensions.k8s.io/clusterworkflowtemplates.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/cronworkflows.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workflowartifactgctasks.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workfloweventbindings.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workflows.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workflowtaskresults.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workflowtasksets.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/workflowtemplates.argoproj.io created
+serviceaccount/argo created
+serviceaccount/argo-server created
+role.rbac.authorization.k8s.io/argo-role created
+clusterrole.rbac.authorization.k8s.io/argo-aggregate-to-admin created
+clusterrole.rbac.authorization.k8s.io/argo-aggregate-to-edit created
+clusterrole.rbac.authorization.k8s.io/argo-aggregate-to-view created
+clusterrole.rbac.authorization.k8s.io/argo-cluster-role created
+clusterrole.rbac.authorization.k8s.io/argo-server-cluster-role created
+rolebinding.rbac.authorization.k8s.io/argo-binding created
+clusterrolebinding.rbac.authorization.k8s.io/argo-binding created
+clusterrolebinding.rbac.authorization.k8s.io/argo-server-binding created
+configmap/workflow-controller-configmap created
+service/argo-server created
+priorityclass.scheduling.k8s.io/workflow-controller created
+deployment.apps/argo-server created
+deployment.apps/workflow-controller created
+⏳ Waiting for Argo Workflows...
+pod/argo-server-7c484f7bb9-xp2dv condition met
+pod/workflow-controller-6f47fb869b-g9pwr condition met
+🎉 Minikube setup complete!
+
+Cluster Info:
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+error: unknown flag: --short
+See 'kubectl version --help' for usage.
+⚠️  Minikube setup completed with warnings
+Checking if cluster is accessible...
+✓ Kubernetes cluster is running
+✓ You can proceed with deployment
+Развертывание Kubeflow...
+[INFO] Checking prerequisites...
+[SUCCESS] Prerequisites check passed!
+[INFO] Setting up Minikube cluster...
+[SUCCESS] Minikube already running
+[INFO] Creating namespaces...
+namespace/kubeflow created
+namespace/kubeflow-user created
+namespace/ml-infrastructure created
+[SUCCESS] Namespaces created!
+[INFO] Deploying infrastructure components...
+deployment.apps/minio created
+persistentvolumeclaim/minio-pvc created
+secret/minio-secret created
+service/minio-service created
+service/minio-console created
+configmap/mysql-config created
+deployment.apps/mysql created
+persistentvolumeclaim/mysql-pvc created
+secret/mysql-secret created
+service/mysql-service created
+[INFO] Configuring MySQL readiness probe...
+deployment.apps/mysql patched
+[INFO] Waiting for MinIO to be ready...
+pod/minio-75fd557d9f-w7b85 condition met
+[INFO] Waiting for MySQL to be ready (this may take 2-3 minutes)...
+error: timed out waiting for the condition on pods/mysql-5865b5bbfb-gtpfl
+[WARNING] MySQL taking longer than expected. Checking status...
+
+MySQL Pod Status:
+NAME                     READY   STATUS    RESTARTS   AGE
+mysql-5865b5bbfb-gtpfl   0/1     Running   0          38m
+
+MySQL Pod Details:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  mysql-storage:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  mysql-pvc
+    ReadOnly:   false
+  kube-api-access-fd6mb:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  38m                 default-scheduler  Successfully assigned ml-infrastructure/mysql-5865b5bbfb-gtpfl to minikube
+  Normal   Pulling    38m                 kubelet            Pulling image "mysql:8.0.36"
+  Normal   Pulled     32m                 kubelet            Successfully pulled image "mysql:8.0.36" in 6m35.029s (6m35.029s including waiting)
+  Normal   Created    32m                 kubelet            Created container mysql
+  Normal   Started    32m                 kubelet            Started container mysql
+  Warning  Unhealthy  57s (x63 over 31m)  kubelet            Readiness probe failed: mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+
+MySQL Logs:
+2025-09-26T17:13:30.081762Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
+2025-09-26T17:13:30.081763Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.36'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  MySQL Community Server - GPL.
+2025-09-26 17:13:29+00:00 [Note] [Entrypoint]: Temporary server started.
+'/var/lib/mysql/mysql.sock' -> '/var/run/mysqld/mysqld.sock'
+Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it.
+Warning: Unable to load '/usr/share/zoneinfo/leap-seconds.list' as time zone. Skipping it.
+Warning: Unable to load '/usr/share/zoneinfo/leapseconds' as time zone. Skipping it.
+Warning: Unable to load '/usr/share/zoneinfo/tzdata.zi' as time zone. Skipping it.
+Warning: Unable to load '/usr/share/zoneinfo/zone.tab' as time zone. Skipping it.
+Warning: Unable to load '/usr/share/zoneinfo/zone1970.tab' as time zone. Skipping it.
+2025-09-26 17:13:29+00:00 [Note] [Entrypoint]: Creating database mlpipeline
+2025-09-26 17:13:29+00:00 [Note] [Entrypoint]: Creating user mlpipeline
+2025-09-26 17:13:29+00:00 [Note] [Entrypoint]: Giving user mlpipeline access to schema mlpipeline
+
+2025-09-26 17:13:29+00:00 [Note] [Entrypoint]: Stopping temporary server
+2025-09-26T17:13:30.081764Z 13 [System] [MY-013172] [Server] Received SHUTDOWN from user root. Shutting down mysqld (Version: 8.0.36).
+2025-09-26T17:13:31.736689Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.36)  MySQL Community Server - GPL.
+2025-09-26 17:13:32+00:00 [Note] [Entrypoint]: Temporary server stopped
+
+2025-09-26 17:13:32+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+
+2025-09-26T17:13:32.481618Z 0 [Warning] [MY-011068] [Server] The syntax '--skip-host-cache' is deprecated and will be removed in a future release. Please use SET GLOBAL host_cache_size=0 instead.
+2025-09-26T17:13:32.483148Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.36) starting as process 1
+2025-09-26T17:13:32.491198Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2025-09-26T17:13:32.671874Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2025-09-26T17:13:32.913009Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2025-09-26T17:13:32.913031Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2025-09-26T17:13:32.918910Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+2025-09-26T17:13:32.930540Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+2025-09-26T17:13:32.930639Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.36'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
+
+[WARNING] MySQL pod is starting but not ready yet. Waiting additional 3 minutes...
+error: timed out waiting for the condition on pods/mysql-5865b5bbfb-gtpfl
+[ERROR] MySQL still not ready. Please check the logs above.
+Do you want to continue anyway? (yes/no): yes
+[INFO] Initializing MySQL databases...
+[SUCCESS] MySQL is ready!
+[INFO] Creating databases...
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[SUCCESS] Infrastructure deployed successfully!
+[INFO] Copying secrets to kubeflow namespaces...
+[SUCCESS] Secrets copied!
+[INFO] Creating MinIO buckets...
+Added `myminio` successfully.
+Bucket created successfully `myminio/mlpipeline`.
+Bucket created successfully `myminio/models`.
+Bucket created successfully `myminio/data`.
+[INFO] Deploying Kubeflow Pipelines...
+configmap/ml-pipeline-config created
+serviceaccount/pipeline-runner created
+role.rbac.authorization.k8s.io/pipeline-runner created
+rolebinding.rbac.authorization.k8s.io/pipeline-runner created
+service/ml-pipeline created
+service/ml-pipeline-ui created
+deployment.apps/ml-pipeline-persistenceagent created
+Error from server (BadRequest): error when creating "02-kubeflow-pipelines/kubeflow-all.yaml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.namespace", unknown field "spec.template.spec.containers[0].env[8].valueFrom.secretKeyRef.namespace", unknown field "spec.template.spec.containers[0].env[9].valueFrom.secretKeyRef.namespace"
+Error from server (BadRequest): error when creating "02-kubeflow-pipelines/kubeflow-all.yaml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.namespace", unknown field "spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.namespace"

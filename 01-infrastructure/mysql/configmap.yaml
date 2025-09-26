@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: ml-infrastructure
+data:
+  MYSQL_DATABASE: "mlpipeline"
+  MYSQL_USER: "mlpipeline"
