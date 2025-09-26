@@ -50,23 +50,25 @@ spec:
           livenessProbe:
             exec:
               command:
-                - sh
-                - -c
-                - mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD
-            initialDelaySeconds: 60
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 6
           readinessProbe:
             exec:
               command:
-                - sh
-                - -c
-                - mysql -h localhost -u root -p$MYSQL_ROOT_PASSWORD -e "SELECT 1"
-            initialDelaySeconds: 45
+                - mysql
+                - -h
+                - localhost
+                - -u
+                - root
+                - -p${MYSQL_ROOT_PASSWORD}
+                - -e
+                - SELECT 1
+            initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 20
           resources:
             requests:
               memory: "512Mi"

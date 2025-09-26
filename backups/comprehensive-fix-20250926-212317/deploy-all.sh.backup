@@ -59,9 +59,20 @@ log_info "Deploying infrastructure components..."
 kubectl apply -f 01-infrastructure/minio/
 kubectl apply -f 01-infrastructure/mysql/
 
-# Configure MySQL for better initialization
-log_info "Configuring MySQL deployment..."
-kubectl apply -f 01-infrastructure/mysql/deployment.yaml
+# Патч MySQL для более мягкого readiness probe
+log_info "Configuring MySQL readiness probe..."
+kubectl patch deployment mysql -n ml-infrastructure --type='json' -p='[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/readinessProbe/failureThreshold",
+    "value": 20
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/readinessProbe/initialDelaySeconds",
+    "value": 45
+  }
+]' 2>/dev/null || log_warning "Could not patch MySQL readiness probe"
 
 log_info "Waiting for MinIO to be ready..."
 kubectl wait --for=condition=Ready pods -l app=minio -n ml-infrastructure --timeout=600s || {
@@ -71,11 +82,67 @@ kubectl wait --for=condition=Ready pods -l app=minio -n ml-infrastructure --time
 }
 
 log_info "Waiting for MySQL to be ready (this may take 2-3 minutes)..."
-bash scripts/wait-mysql.sh || {
-    log_error "MySQL initialization failed"
-    exit 1
+# Увеличиваем таймаут и добавляем диагностику
+kubectl wait --for=condition=Ready pods -l app=mysql -n ml-infrastructure --timeout=600s || {
+    log_warning "MySQL taking longer than expected. Checking status..."
+    echo ""
+    echo "MySQL Pod Status:"
+    kubectl get pods -l app=mysql -n ml-infrastructure
+    echo ""
+    echo "MySQL Pod Details:"
+    kubectl describe pod -l app=mysql -n ml-infrastructure | tail -30
+    echo ""
+    echo "MySQL Logs:"
+    kubectl logs -l app=mysql -n ml-infrastructure --tail=30 2>/dev/null || echo "No logs yet"
+    echo ""
+    
+    # Проверяем, запустился ли под вообще
+    if kubectl get pods -l app=mysql -n ml-infrastructure | grep -q "Running\|ContainerCreating"; then
+        log_warning "MySQL pod is starting but not ready yet. Waiting additional 3 minutes..."
+        kubectl wait --for=condition=Ready pods -l app=mysql -n ml-infrastructure --timeout=180s || {
+            log_error "MySQL still not ready. Please check the logs above."
+            read -p "Do you want to continue anyway? (yes/no): " continue_deploy
+            if [ "$continue_deploy" != "yes" ]; then
+                exit 1
+            fi
+        }
+    else
+        log_error "MySQL pod failed to start. Check the details above."
+        exit 1
+    fi
 }
 
+# Initialize MySQL databases
+log_info "Initializing MySQL databases..."
+
+# Подождать, пока MySQL полностью запустится
+max_attempts=30
+attempt=0
+while [ $attempt -lt $max_attempts ]; do
+    if kubectl exec -n ml-infrastructure deployment/mysql -- mysqladmin ping -h localhost -uroot -prootpass123 2>/dev/null | grep -q "mysqld is alive"; then
+        log_success "MySQL is ready!"
+        break
+    fi
+    echo "  Waiting for MySQL to be fully ready... ($((attempt+1))/$max_attempts)"
+    sleep 5
+    attempt=$((attempt+1))
+done
+
+if [ $attempt -eq $max_attempts ]; then
+    log_error "MySQL did not become ready in time"
+    exit 1
+fi
+
+# Теперь создаем базы данных
+log_info "Creating databases..."
+kubectl exec -n ml-infrastructure deployment/mysql -- mysql -uroot -prootpass123 -e "CREATE DATABASE IF NOT EXISTS mlpipeline;" || {
+    log_error "Failed to create mlpipeline database"
+    exit 1
+}
+kubectl exec -n ml-infrastructure deployment/mysql -- mysql -uroot -prootpass123 -e "CREATE DATABASE IF NOT EXISTS katib;" || {
+    log_error "Failed to create katib database"
+    exit 1
+}
 log_success "Infrastructure deployed successfully!"
 
 # Copy secrets to other namespaces
