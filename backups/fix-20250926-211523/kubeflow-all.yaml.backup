@@ -1,0 +1,270 @@
+---
+# KFP ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-pipeline-config
+  namespace: kubeflow
+data:
+  ConMaxLifeTimeSec: "120"
+  DefaultPipelineRunnerServiceAccount: "pipeline-runner"
+  InitConnectionTimeout: "6m"
+---
+# Pipeline Runner ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pipeline-runner
+  namespace: kubeflow
+---
+# Pipeline Runner Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pipeline-runner
+  namespace: kubeflow
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+---
+# Pipeline Runner RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pipeline-runner
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pipeline-runner
+subjects:
+  - kind: ServiceAccount
+    name: pipeline-runner
+    namespace: kubeflow
+---
+# ML Pipeline API Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline
+  namespace: kubeflow
+  labels:
+    app: ml-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline
+    spec:
+      serviceAccountName: pipeline-runner
+      containers:
+        - name: ml-pipeline-api-server
+          image: gcr.io/ml-pipeline/api-server:2.0.5
+          env:
+            - name: OBJECTSTORECONFIG_SECURE
+              value: "false"
+            - name: OBJECTSTORECONFIG_BUCKETNAME
+              value: "mlpipeline"
+            - name: DBCONFIG_CONMAXLIFETIME
+              valueFrom:
+                configMapKeyRef:
+                  name: ml-pipeline-config
+                  key: ConMaxLifeTimeSec
+            - name: DBCONFIG_HOST
+              value: "mysql-service.ml-infrastructure"
+            - name: DBCONFIG_PORT
+              value: "3306"
+            - name: DBCONFIG_USER
+              value: "mlpipeline"
+            - name: DBCONFIG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+                  namespace: ml-infrastructure
+            - name: DBCONFIG_DBNAME
+              value: "mlpipeline"
+            - name: OBJECTSTORECONFIG_ACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+                  namespace: ml-infrastructure
+            - name: OBJECTSTORECONFIG_SECRETACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+                  namespace: ml-infrastructure
+            - name: OBJECTSTORECONFIG_HOST
+              value: "minio-service.ml-infrastructure"
+            - name: OBJECTSTORECONFIG_PORT
+              value: "9000"
+          ports:
+            - containerPort: 8888
+              name: http
+            - containerPort: 8887
+              name: grpc
+          livenessProbe:
+            httpGet:
+              path: /apis/v1beta1/healthz
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /apis/v1beta1/healthz
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+---
+# ML Pipeline Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-pipeline
+  namespace: kubeflow
+  labels:
+    app: ml-pipeline
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8888
+      targetPort: 8888
+      protocol: TCP
+      name: http
+    - port: 8887
+      targetPort: 8887
+      protocol: TCP
+      name: grpc
+  selector:
+    app: ml-pipeline
+---
+# ML Pipeline UI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-ui
+  namespace: kubeflow
+  labels:
+    app: ml-pipeline-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline-ui
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-ui
+    spec:
+      containers:
+        - name: ml-pipeline-ui
+          image: gcr.io/ml-pipeline/frontend:2.0.5
+          env:
+            - name: MINIO_NAMESPACE
+              value: ml-infrastructure
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+                  namespace: ml-infrastructure
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+                  namespace: ml-infrastructure
+            - name: ALLOW_CUSTOM_VISUALIZATIONS
+              value: "true"
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+# ML Pipeline UI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-pipeline-ui
+  namespace: kubeflow
+  labels:
+    app: ml-pipeline-ui
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30888
+      protocol: TCP
+      name: http
+  selector:
+    app: ml-pipeline-ui
+---
+# ML Pipeline Persistence Agent
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-persistenceagent
+  namespace: kubeflow
+  labels:
+    app: ml-pipeline-persistenceagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline-persistenceagent
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-persistenceagent
+    spec:
+      serviceAccountName: pipeline-runner
+      containers:
+        - name: ml-pipeline-persistenceagent
+          image: gcr.io/ml-pipeline/persistenceagent:2.0.5
+          env:
+            - name: NAMESPACE
+              value: kubeflow
+            - name: TTL_SECONDS_AFTER_WORKFLOW_FINISH
+              value: "86400"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
