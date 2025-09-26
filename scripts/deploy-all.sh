@@ -78,19 +78,63 @@ bash scripts/wait-mysql.sh || {
 
 log_success "Infrastructure deployed successfully!"
 
-# Copy secrets to other namespaces
+# Copy secrets to other namespaces - FIXED VERSION
 log_info "Copying secrets to kubeflow namespaces..."
-kubectl get secret minio-secret -n ml-infrastructure -o yaml | \
-  sed 's/namespace: ml-infrastructure/namespace: kubeflow/' | \
-  kubectl apply -f - >/dev/null 2>&1
 
-kubectl get secret mysql-secret -n ml-infrastructure -o yaml | \
-  sed 's/namespace: ml-infrastructure/namespace: kubeflow/' | \
-  kubectl apply -f - >/dev/null 2>&1
+# Function to copy secret safely
+copy_secret() {
+    local secret_name=$1
+    local source_ns=$2
+    local target_ns=$3
+    
+    # Check if secret exists in source
+    if ! kubectl get secret "$secret_name" -n "$source_ns" >/dev/null 2>&1; then
+        log_error "Secret $secret_name not found in namespace $source_ns"
+        return 1
+    fi
+    
+    # Get secret data and clean metadata
+    kubectl get secret "$secret_name" -n "$source_ns" -o json | \
+      jq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields) | .metadata.namespace="'$target_ns'"' | \
+      kubectl apply -f - 2>&1 | grep -v "unchanged" || true
+    
+    return 0
+}
 
-kubectl get secret minio-secret -n ml-infrastructure -o yaml | \
-  sed 's/namespace: ml-infrastructure/namespace: kubeflow-user/' | \
-  kubectl apply -f - >/dev/null 2>&1
+# Alternative function if jq is not available
+copy_secret_simple() {
+    local secret_name=$1
+    local source_ns=$2
+    local target_ns=$3
+    
+    # Check if secret exists in target, delete if exists
+    kubectl get secret "$secret_name" -n "$target_ns" >/dev/null 2>&1 && \
+        kubectl delete secret "$secret_name" -n "$target_ns" >/dev/null 2>&1 || true
+    
+    # Get secret and recreate in target namespace
+    kubectl get secret "$secret_name" -n "$source_ns" -o yaml | \
+      sed 's/namespace: '$source_ns'/namespace: '$target_ns'/' | \
+      sed '/resourceVersion:/d' | \
+      sed '/uid:/d' | \
+      sed '/creationTimestamp:/d' | \
+      sed '/selfLink:/d' | \
+      kubectl create -f - 2>&1 | grep -v "already exists" || true
+    
+    return 0
+}
+
+# Check if jq is available
+if command -v jq >/dev/null 2>&1; then
+    log_info "Using jq for secret copying (preferred method)"
+    copy_secret "minio-secret" "ml-infrastructure" "kubeflow" || log_warning "Failed to copy minio-secret to kubeflow"
+    copy_secret "mysql-secret" "ml-infrastructure" "kubeflow" || log_warning "Failed to copy mysql-secret to kubeflow"
+    copy_secret "minio-secret" "ml-infrastructure" "kubeflow-user" || log_warning "Failed to copy minio-secret to kubeflow-user"
+else
+    log_info "Using simple method for secret copying (jq not found)"
+    copy_secret_simple "minio-secret" "ml-infrastructure" "kubeflow" || log_warning "Failed to copy minio-secret to kubeflow"
+    copy_secret_simple "mysql-secret" "ml-infrastructure" "kubeflow" || log_warning "Failed to copy mysql-secret to kubeflow"
+    copy_secret_simple "minio-secret" "ml-infrastructure" "kubeflow-user" || log_warning "Failed to copy minio-secret to kubeflow-user"
+fi
 
 log_success "Secrets copied!"
 

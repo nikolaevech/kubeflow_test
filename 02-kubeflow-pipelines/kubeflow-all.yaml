@@ -89,7 +89,6 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: MYSQL_PASSWORD
-                  namespace: ml-infrastructure
             - name: DBCONFIG_DBNAME
               value: "mlpipeline"
             - name: OBJECTSTORECONFIG_ACCESSKEY
@@ -97,13 +96,11 @@ spec:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_USER
-                  namespace: ml-infrastructure
             - name: OBJECTSTORECONFIG_SECRETACCESSKEY
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_PASSWORD
-                  namespace: ml-infrastructure
             - name: OBJECTSTORECONFIG_HOST
               value: "minio-service.ml-infrastructure"
             - name: OBJECTSTORECONFIG_PORT
@@ -184,13 +181,11 @@ spec:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_USER
-                  namespace: ml-infrastructure
             - name: MINIO_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_PASSWORD
-                  namespace: ml-infrastructure
             - name: ALLOW_CUSTOM_VISUALIZATIONS
               value: "true"
           ports:

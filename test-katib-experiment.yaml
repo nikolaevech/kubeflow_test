@@ -1,0 +1,48 @@
+---
+# Simple test experiment for Katib
+apiVersion: kubeflow.org/v1beta1
+kind: Experiment
+metadata:
+  name: random-test-experiment
+  namespace: kubeflow
+spec:
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: random
+  parallelTrialCount: 2
+  maxTrialCount: 5
+  maxFailedTrialCount: 3
+
+  parameters:
+    - name: lr
+      parameterType: double
+      feasibleSpace:
+        min: "0.01"
+        max: "0.05"
+    - name: num-layers
+      parameterType: int
+      feasibleSpace:
+        min: "2"
+        max: "5"
+
+  trialTemplate:
+    primaryContainerName: training-container
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          spec:
+            containers:
+              - name: training-container
+                image: docker.io/kubeflowkatib/mxnet-mnist:latest
+                command:
+                  - "python3"
+                  - "/opt/mxnet-mnist/mnist.py"
+                  - "--batch-size=64"
+                  - "--lr=${trialParameters.learningRate}"
+                  - "--num-layers=${trialParameters.numLayers}"
+            restartPolicy: Never

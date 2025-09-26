@@ -73,25 +73,21 @@ spec:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_USER
-                  namespace: ml-infrastructure
             - name: MINIO_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_PASSWORD
-                  namespace: ml-infrastructure
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_USER
-                  namespace: ml-infrastructure
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_PASSWORD
-                  namespace: ml-infrastructure
           ports:
             - containerPort: 8888
               name: notebook

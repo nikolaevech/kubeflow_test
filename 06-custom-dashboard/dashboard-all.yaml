@@ -1,0 +1,288 @@
+---
+# Custom Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-dashboard-config
+  namespace: kubeflow
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Kubeflow ML Platform Dashboard</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            }
+            
+            .container {
+                max-width: 1200px;
+                width: 100%;
+            }
+            
+            .header {
+                text-align: center;
+                color: white;
+                margin-bottom: 40px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            }
+            
+            .header p {
+                font-size: 1.1rem;
+                opacity: 0.9;
+            }
+            
+            .services-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .service-card {
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                transition: transform 0.3s, box-shadow 0.3s;
+                text-decoration: none;
+                color: inherit;
+                display: block;
+            }
+            
+            .service-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            }
+            
+            .service-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+            }
+            
+            .service-card h3 {
+                color: #2d3748;
+                margin-bottom: 10px;
+                font-size: 1.3rem;
+            }
+            
+            .service-card p {
+                color: #718096;
+                line-height: 1.5;
+                margin-bottom: 15px;
+            }
+            
+            .service-status {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 500;
+            }
+            
+            .status-active {
+                background: #c6f6d5;
+                color: #22543d;
+            }
+            
+            .pipelines { background: linear-gradient(135deg, #667eea, #764ba2); }
+            .katib { background: linear-gradient(135deg, #f093fb, #f5576c); }
+            .jupyter { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+            .minio { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+            .kserve { background: linear-gradient(135deg, #fa709a, #fee140); }
+            
+            .info-section {
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            
+            .info-section h2 {
+                color: #2d3748;
+                margin-bottom: 15px;
+            }
+            
+            .credentials {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+            }
+            
+            .credential-item {
+                background: #f7fafc;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+            }
+            
+            .credential-item strong {
+                color: #2d3748;
+                display: block;
+                margin-bottom: 5px;
+            }
+            
+            .credential-item code {
+                color: #667eea;
+                background: white;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-family: 'Courier New', monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚀 Kubeflow ML Platform</h1>
+                <p>Production-ready Machine Learning Infrastructure</p>
+            </div>
+            
+            <div class="services-grid">
+                <a href="http://MINIKUBE_IP:30888" class="service-card" target="_blank">
+                    <div class="service-icon pipelines">📊</div>
+                    <h3>Kubeflow Pipelines</h3>
+                    <p>Build and orchestrate ML workflows with Argo Workflows backend</p>
+                    <span class="service-status status-active">● Active</span>
+                </a>
+                
+                <a href="http://MINIKUBE_IP:30777" class="service-card" target="_blank">
+                    <div class="service-icon katib">🔬</div>
+                    <h3>Katib</h3>
+                    <p>Hyperparameter tuning and Neural Architecture Search</p>
+                    <span class="service-status status-active">● Active</span>
+                </a>
+                
+                <a href="http://MINIKUBE_IP:30666" class="service-card" target="_blank">
+                    <div class="service-icon jupyter">📓</div>
+                    <h3>JupyterLab</h3>
+                    <p>Interactive development environment with ML libraries</p>
+                    <span class="service-status status-active">● Active</span>
+                </a>
+                
+                <a href="http://MINIKUBE_IP:30900" class="service-card" target="_blank">
+                    <div class="service-icon minio">💾</div>
+                    <h3>MinIO Console</h3>
+                    <p>S3-compatible object storage for artifacts and models</p>
+                    <span class="service-status status-active">● Active</span>
+                </a>
+                
+                <div class="service-card">
+                    <div class="service-icon kserve">🤖</div>
+                    <h3>KServe</h3>
+                    <p>Production model serving for ML/AI models</p>
+                    <span class="service-status status-active">● Ready</span>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2>🔑 Default Credentials</h2>
+                <div class="credentials">
+                    <div class="credential-item">
+                        <strong>MinIO</strong>
+                        <div>Username: <code>minioadmin</code></div>
+                        <div>Password: <code>minioadmin123</code></div>
+                    </div>
+                    <div class="credential-item">
+                        <strong>MySQL</strong>
+                        <div>Username: <code>root</code></div>
+                        <div>Password: <code>rootpass123</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            // Replace MINIKUBE_IP with actual IP on page load
+            window.addEventListener('DOMContentLoaded', function() {
+                const hostname = window.location.hostname;
+                const html = document.body.innerHTML;
+                document.body.innerHTML = html.replace(/MINIKUBE_IP/g, hostname);
+            });
+        </script>
+    </body>
+    </html>
+---
+# Custom Dashboard Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-dashboard
+  namespace: kubeflow
+  labels:
+    app: custom-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-dashboard
+  template:
+    metadata:
+      labels:
+        app: custom-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: html
+          configMap:
+            name: custom-dashboard-config
+---
+# Custom Dashboard Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-dashboard
+  namespace: kubeflow
+  labels:
+    app: custom-dashboard
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+      protocol: TCP
+      name: http
+  selector:
+    app: custom-dashboard

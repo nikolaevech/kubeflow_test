@@ -1,0 +1,147 @@
+---
+# JupyterLab PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyter-pvc
+  namespace: kubeflow-user
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+# JupyterLab ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jupyter-config
+  namespace: kubeflow-user
+data:
+  jupyter_notebook_config.py: |
+    c.NotebookApp.ip = '0.0.0.0'
+    c.NotebookApp.port = 8888
+    c.NotebookApp.open_browser = False
+    c.NotebookApp.token = ''
+    c.NotebookApp.password = ''
+    c.NotebookApp.allow_root = True
+    c.NotebookApp.base_url = '/jupyter/'
+---
+# JupyterLab Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterlab
+  namespace: kubeflow-user
+  labels:
+    app: jupyterlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyterlab
+  template:
+    metadata:
+      labels:
+        app: jupyterlab
+    spec:
+      containers:
+        - name: jupyterlab
+          image: jupyter/tensorflow-notebook:python-3.10
+          command:
+            - jupyter
+            - lab
+            - --notebook-dir=/home/jovyan
+            - --ip=0.0.0.0
+            - --port=8888
+            - --no-browser
+            - --allow-root
+            - --NotebookApp.token=''
+            - --NotebookApp.password=''
+            - --NotebookApp.base_url=/jupyter/
+          env:
+            - name: JUPYTER_ENABLE_LAB
+              value: "yes"
+            - name: GRANT_SUDO
+              value: "yes"
+            - name: MINIO_ENDPOINT
+              value: "minio-service.ml-infrastructure:9000"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+                  namespace: ml-infrastructure
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+                  namespace: ml-infrastructure
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+                  namespace: ml-infrastructure
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+                  namespace: ml-infrastructure
+          ports:
+            - containerPort: 8888
+              name: notebook
+          volumeMounts:
+            - name: jupyter-data
+              mountPath: /home/jovyan/work
+            - name: config
+              mountPath: /home/jovyan/.jupyter
+          livenessProbe:
+            httpGet:
+              path: /jupyter/api
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /jupyter/api
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+      volumes:
+        - name: jupyter-data
+          persistentVolumeClaim:
+            claimName: jupyter-pvc
+        - name: config
+          configMap:
+            name: jupyter-config
+---
+# JupyterLab Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyterlab
+  namespace: kubeflow-user
+  labels:
+    app: jupyterlab
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8888
+      nodePort: 30666
+      protocol: TCP
+      name: http
+  selector:
+    app: jupyterlab
